@@ -3,13 +3,15 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.naive_bayes import GaussianNB
+from sklearn.pipeline import Pipeline
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.tree import export_graphviz as eg
 from sklearn.model_selection import GridSearchCV, ParameterGrid
 import pydot
 from sklearn.linear_model import Perceptron
 from sklearn.neural_network import MLPClassifier
-from sklearn.metrics import f1_score, confusion_matrix, precision_recall_fscore_support, plot_confusion_matrix, accuracy_score
+from sklearn.metrics import f1_score, confusion_matrix, precision_recall_fscore_support, plot_confusion_matrix, \
+    accuracy_score
 
 data = pd.read_csv("drug200.csv")
 
@@ -144,8 +146,6 @@ def calculate_and_write_averages(av_accuracy, av_micro, av_weighted):
         f.close()
 
 
-np.set_printoptions(precision=1)
-
 '''NB'''
 for x in range(10):
     clf = GaussianNB()
@@ -164,10 +164,6 @@ for x in range(10):
         np.savetxt(f, confusion_matrix(y_test, predictions))
         f.close()
 
-    # plot_confusion_matrix(clf, x_test, y_test)
-    # plt.title("Gaussian NB Confusion Matrix")
-    # plt.savefig("GaussianConfusionMatrix.png")
-
     performance_results(y_test, predictions, x)
 
 calculate_and_write_averages(average_accuracy, average_maf1, average_waf1)
@@ -175,17 +171,10 @@ calculate_and_write_averages(average_accuracy, average_maf1, average_waf1)
 '''Base-DT'''
 
 for x in range(10):
-    # array_y_test = np.array(y_test)
-    # array_x_test = np.array(x_test)
-    # array_y_test = array_y_test.shape
-    # array_x_test = array_x_test.shape[:]
-    # y_test = y_test.shape[40, 1]
-
     clf = DecisionTreeClassifier()
     clf.fit(x_train, y_train)
     print(clf)
     predictions = clf.predict(x_test)
-    # scores = cross_val_score(clf, array_x_test, array_y_test)
 
     '''#7 Analysis in text file'''
 
@@ -197,10 +186,6 @@ for x in range(10):
         f.write("\n\n Confusion Matrix \n")
         np.savetxt(f, confusion_matrix(y_test, predictions))
         f.close()
-
-    # plot_confusion_matrix(clf, x_test, y_test)
-    # plt.title("Base-DT Confusion Matrix")
-    # plt.savefig("BaseDTConfusionMatrix.png")
 
     performance_results(y_test, predictions, x)
 
@@ -243,10 +228,6 @@ for x in range(10):
         np.savetxt(f, confusion_matrix(y_test, predictions))
         f.close()
 
-        # plot_confusion_matrix(grid_search_cv, x_test, y_test)
-        # plt.title("Top DT Confusion Matrix")
-        # plt.savefig("Top-DTConfusionMatrix.png")
-
         performance_results(y_test, predictions, x)
 
 calculate_and_write_averages(average_accuracy, average_maf1, average_waf1)
@@ -269,10 +250,6 @@ for x in range(10):
         f.write("\n\n Confusion Matrix \n")
         np.savetxt(f, confusion_matrix(y_test, predictions))
         f.close()
-
-        # plot_confusion_matrix(clf, x_test, y_test)
-        # plt.title("Perceptron Confusion Matrix")
-        # plt.savefig("PERConfusionMatrix.png")
 
         performance_results(y_test, predictions, x)
 
@@ -300,28 +277,40 @@ for x in range(10):
         np.savetxt(f, confusion_matrix(y_test, predictions))
         f.close()
 
-        # plot_confusion_matrix(clf, x_test, y_test)
-        # plt.title("Base MLP Confusion Matrix")
-        # plt.savefig("BaseMLPConfusionMatrix.png")
-
         performance_results(y_test, predictions, x)
 
 calculate_and_write_averages(average_accuracy, average_maf1, average_waf1)
 
 '''Top-MLP'''
 
-'''??Params??'''
 for x in range(10):
-    mlpParams = {'activation': ['tanh', 'relu', 'identity'], 'hidden_layers': [3, 10],
-                 'solver': ['adam', 'sgd']}
-    #print(estimator.get_params().keys())
-    #grid_search_cv = GridSearchCV(MLPClassifier(), mlpParams)
-    grid_search_cv.fit(x_train, y_train)
+    # mlpParams = {'activation': ('tanh', 'relu', 'identity'), 'hidden_layers': [10, 10, 10],
+    #             'solver': ('adam', 'sgd')}
 
-    print(grid_search_cv.get_params().keys())
+    # mlp = MLPClassifier()
+    # mlpParams = {'solver': ('adam', 'sgd'), 'activation':  ('logistic', 'tanh', 'relu', 'identity'), 'hidden_layer_sizes': (10, 10, 10)}
+
+    '''GRID = [
+        {'estimator': [MLPClassifier()],
+         'estimator__solver': ['adam', 'sgd'],
+         'estimator__hidden_layer_sizes': [(10), (10), (10)],
+         'estimator__activation': ['logistic', 'tanh', 'relu',
+                                   'identity']
+         }
+    ]
+
+    PIPELINE = Pipeline([('scaler', None), ('estimator', MLPClassifier())])'''
+
+    # print(estimator.get_params().keys())
+    # randomVar = MLPClassifier()
+    # randomVar.fit(x_train, y_train)
+    # grid_search_cv = GridSearchCV(estimator=PIPELINE, param_grid=GRID)
+    # grid_search_cv.fit(clf, x_train, y_train)
+
+    '''print(grid_search_cv.get_params().keys())
     print(grid_search_cv.best_estimator_)
 
-    eg(
+   eg(
         grid_search_cv.best_estimator_,
         out_file="drug_topMLP.dot",
         feature_names=['Age', 'Sex', 'BP', 'Cholesterol', 'Na_to_K'],
@@ -352,4 +341,4 @@ for x in range(10):
 
         performance_results(y_test, predictions, x)
 
-calculate_and_write_averages(average_accuracy, average_maf1, average_waf1)
+calculate_and_write_averages(average_accuracy, average_maf1, average_waf1)'''

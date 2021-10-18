@@ -1,0 +1,9 @@
+8. Does the same model give you the same performance every time?
+
+Yes, each model, even when repeated 10 times, gives the same results.
+The reason might be that some classes are under represented, like Drug A, B and C have a lot less instances compared to Drug Y.
+It could also be related to the distribution of the values of each feature, and the weight associated to each of them.
+For example, the feature "Cholesterol" only has two values: High and Normal. Each of them have approximalety the same number of instances.
+Considering this, if the weight of Cholesterol is significantly higherthan the other attributes, with only two values, 
+it could make sense that there is little room for getting different results.
+Another hypothesis is symply that the data collected is not big enough, and we should use a test sample of more than 40 instances.
