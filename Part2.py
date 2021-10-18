@@ -1,17 +1,15 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.naive_bayes import GaussianNB
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.tree import export_graphviz as eg
-from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import GridSearchCV, ParameterGrid
 import pydot
 from sklearn.linear_model import Perceptron
 from sklearn.neural_network import MLPClassifier
 from sklearn.metrics import f1_score, confusion_matrix, precision_recall_fscore_support, plot_confusion_matrix, accuracy_score
-import string
-
 
 data = pd.read_csv("drug200.csv")
 
@@ -24,13 +22,12 @@ drugCCount = data.Drug.value_counts().drugC
 drugXCount = data.Drug.value_counts().drugX
 drugYCount = data.Drug.value_counts().drugY
 
-
 '''Put it in a chart'''
 plotValues = [drugACount, drugBCount, drugCCount, drugXCount, drugYCount]
 plotCategories = ['Drug A', 'Drug B', 'Drug C', 'Drug X', 'Drug Y']
+plt.title("Drugs Distribution")
 plt.bar(plotCategories, plotValues)
 plt.savefig("drug-distribution.pdf")
-
 
 '''#4 Transform nominal FEATURES values to numerical values'''
 data.Sex = pd.get_dummies(data.Sex, dummy_na=False, columns=['Sex'], drop_first=False)
@@ -38,9 +35,11 @@ data.BP = pd.Categorical(data.BP, ['LOW', 'NORMAL', 'HIGH'], ordered=True)
 data.BP = data.BP.cat.codes
 data.Cholesterol = pd.Categorical(data.Cholesterol, ['NORMAL', 'HIGH'], ordered=True)
 data.Cholesterol = data.Cholesterol.cat.codes
-
+data.Drug = pd.Categorical(data.Drug, ['drugA', 'drugB', 'drugC', 'drugX', 'drugY'], ordered=True)
+data.Drug = data.Drug.cat.codes
 
 '''Divide priors vs conditionals'''
+
 prior = data.Drug
 attr = data[['Age', 'Sex', 'BP', 'Cholesterol', 'Na_to_K']]
 '''x should be features
@@ -49,21 +48,33 @@ y should be f(x)'''
 X = np.array(attr)
 '''prior'''
 Y = np.array(prior)
+
 '''#5 Split Data set using default parameter values'''
-x_train, x_test, y_train, y_test = train_test_split(attr, prior, test_size=0.2)
+x_train, x_test, y_train, y_test = train_test_split(attr, prior, test_size=0.2, random_state=42, shuffle=True)
+
+with open("drugs-performance.txt", 'w') as f:
+    f.write("DRUGS PERFORMANCE\n")
+    f.close()
 
 '''#6 Run 6 different classifiers'''
 
+average_accuracy = [0] * 10
+average_maf1 = [0] * 10
+average_waf1 = [0] * 10
 
-def performance_results(ytest, pred):
-    results = precision_recall_fscore_support(y_test, pred)
-    print(results)
+'''Function to write information for #7'''
 
+
+def performance_results(ytest, pred, instance):
+    results = precision_recall_fscore_support(y_test, pred, zero_division=1)
     accuracy = accuracy_score(y_test, pred)
-    print(accuracy)
-
     macrof1 = f1_score(ytest, pred, average='macro')
     weightedf1 = f1_score(ytest, pred, average='weighted')
+
+    '''For #8'''
+    average_accuracy[instance] = accuracy
+    average_maf1[instance] = macrof1
+    average_waf1[instance] = weightedf1
 
     with open("drugs-performance.txt", 'a') as f:
         f.write('\n\nPrecision: \n')
@@ -108,165 +119,237 @@ def performance_results(ytest, pred):
         f.close()
 
 
+def calculate_and_write_averages(av_accuracy, av_micro, av_weighted):
+    average_accuracy = np.mean(av_accuracy)
+    average_microf1 = np.mean(av_micro)
+    average_weightedf1 = np.mean(av_weighted)
+
+    stddev_accuracy = np.std(av_accuracy)
+    stddev_microf1 = np.std(av_micro)
+    stddev_weightedf1 = np.std(av_weighted)
+
+    with open("drugs-performance.txt", 'a') as f:
+        f.write("\n\nAverage Accuracy of all 10: ")
+        f.write(str(average_accuracy))
+        f.write("\nAverage Micro-average F1 of all 10: ")
+        f.write(str(average_microf1))
+        f.write("\nAverage Weighted-average F1 of all 10: ")
+        f.write(str(average_weightedf1))
+        f.write("\n\nStandard Deviation of Accuracy of all 10: ")
+        f.write(str(stddev_accuracy))
+        f.write("\nStandard Deviation of Micro-average F1 of all 10: ")
+        f.write(str(stddev_microf1))
+        f.write("\nStandard Deviation of Weighted-average F1 of all 10: ")
+        f.write(str(stddev_weightedf1))
+        f.close()
+
+
+np.set_printoptions(precision=1)
+
 '''NB'''
+for x in range(10):
+    clf = GaussianNB()
+    clf.fit(x_train, y_train)
+    print(clf)
+    predictions = clf.predict(x_test)
 
-clf = GaussianNB()
-clf.fit(x_train, y_train)
-print(clf)
-predictions = clf.predict(x_test)
+    '''#7 Analysis in text file'''
 
+    with open("drugs-performance.txt", 'a') as f:
+        f.write("\n\n*******************************************************\n")
+        f.write("Description: GaussianNB model with default parameters")
+        f.write("\nInstance #")
+        f.write(str(x))
+        f.write("\n\n Confusion Matrix \n")
+        np.savetxt(f, confusion_matrix(y_test, predictions))
+        f.close()
 
-'''#7 Analysis in text file'''
+    # plot_confusion_matrix(clf, x_test, y_test)
+    # plt.title("Gaussian NB Confusion Matrix")
+    # plt.savefig("GaussianConfusionMatrix.png")
 
-with open("drugs-performance.txt", 'w') as f:
-    f.write("*******************************************************\n")
-    f.write("Description: GaussianNB model with default parameters")
-    f.close()
+    performance_results(y_test, predictions, x)
 
-    print(confusion_matrix(y_test, predictions))
-    '''Save in txt????'''
-    plot_confusion_matrix(clf, x_test, y_test)
-    plt.savefig("GaussianConfusionMatrix.png")
-    plt.show()
+calculate_and_write_averages(average_accuracy, average_maf1, average_waf1)
 
-    performance_results(y_test, predictions)
+'''Base-DT'''
 
+for x in range(10):
+    # array_y_test = np.array(y_test)
+    # array_x_test = np.array(x_test)
+    # array_y_test = array_y_test.shape
+    # array_x_test = array_x_test.shape[:]
+    # y_test = y_test.shape[40, 1]
 
+    clf = DecisionTreeClassifier()
+    clf.fit(x_train, y_train)
+    print(clf)
+    predictions = clf.predict(x_test)
+    # scores = cross_val_score(clf, array_x_test, array_y_test)
 
-'''Bse-DT'''
+    '''#7 Analysis in text file'''
 
-clf = DecisionTreeClassifier()
-clf.fit(x_train, y_train)
-print(clf)
-predictions = clf.predict(x_test)
+    with open("drugs-performance.txt", 'a') as f:
+        f.write("\n\n*******************************************************\n")
+        f.write("Description: Base-DT model with default parameters")
+        f.write("\nInstance #")
+        f.write(str(x))
+        f.write("\n\n Confusion Matrix \n")
+        np.savetxt(f, confusion_matrix(y_test, predictions))
+        f.close()
 
-'''#7 Analysis in text file'''
+    # plot_confusion_matrix(clf, x_test, y_test)
+    # plt.title("Base-DT Confusion Matrix")
+    # plt.savefig("BaseDTConfusionMatrix.png")
 
-with open("drugs-performance.txt", 'a') as f:
-    f.write("\n\n*******************************************************\n")
-    f.write("Description: Base-DT model with default parameters")
-    f.close()
+    performance_results(y_test, predictions, x)
 
-    print(confusion_matrix(y_test, predictions))
-    '''Save in txt????'''
-    plot_confusion_matrix(clf, x_test, y_test)
-    plt.savefig("BaseDTConfusionMatrix.png")
-    plt.show()
-
-    performance_results(y_test, predictions)
+calculate_and_write_averages(average_accuracy, average_maf1, average_waf1)
 
 '''Top-DT'''
 
 '''??Params??'''
-params = {'criterion': ['gini', 'entropy'], 'max_depth': list(range(2, 10)), 'min_samples_split': [2, 3, 4]}
-grid_search_cv = GridSearchCV(DecisionTreeClassifier(), params)
-grid_search_cv.fit(x_train, y_train)
+for x in range(10):
+    params = {'criterion': ['gini', 'entropy'], 'max_depth': list(range(2, 10)), 'min_samples_split': [2, 3, 4]}
+    grid_search_cv = GridSearchCV(DecisionTreeClassifier(), params)
+    grid_search_cv.fit(x_train, y_train)
 
-print(grid_search_cv.best_estimator_)
+    print(grid_search_cv.best_estimator_)
 
-eg(
-    grid_search_cv.best_estimator_,
-    out_file=("drug_topDT.dot"),
-    feature_names=['Age', 'Sex', 'BP', 'Cholesterol', 'Na_to_K'],
-    class_names=['DrugA', 'DrugB', 'DrugC', 'DrugX', 'DrugY'],
-    filled=True,
-)
+    eg(
+        grid_search_cv.best_estimator_,
+        out_file=("drug_topDT.dot"),
+        feature_names=['Age', 'Sex', 'BP', 'Cholesterol', 'Na_to_K'],
+        class_names=['DrugA', 'DrugB', 'DrugC', 'DrugX', 'DrugY'],
+        filled=True,
+    )
 
-(graph,) = pydot.graph_from_dot_file('drug_topDT.dot')
-graph.write_png('drug_topDT.png')
+    (graph,) = pydot.graph_from_dot_file('drug_topDT.dot')
+    graph.write_png('drug_topDT.png')
 
-predictions = grid_search_cv.predict(x_test)
+    predictions = grid_search_cv.predict(x_test)
 
-'''#7 Analysis in text file'''
+    '''#7 Analysis in text file'''
 
-with open("drugs-performance.txt", 'a') as f:
-    f.write("\n\n*******************************************************\n")
-    f.write("Description: Top-DT model with parameters"
-            " \ncriterion = [gini, entropy]"
-            "\nmax-depth = a range between 2 and 10"
-            "\nmin_samples_split = [2, 3, 4]")
-    f.close()
+    with open("drugs-performance.txt", 'a') as f:
+        f.write("\n\n*******************************************************\n")
+        f.write("Description: Top-DT model with parameters"
+                " \ncriterion = [gini, entropy]"
+                "\nmax-depth = a range between 2 and 10"
+                "\nmin_samples_split = [2, 3, 4]")
+        f.write("\nInstance #")
+        f.write(str(x))
+        f.write("\n\n Confusion Matrix \n")
+        np.savetxt(f, confusion_matrix(y_test, predictions))
+        f.close()
 
-    print(confusion_matrix(y_test, predictions))
-    '''Save in txt????'''
-    plot_confusion_matrix(grid_search_cv, x_test, y_test)
-    plt.savefig("Top-DTConfusionMatrix.png")
-    plt.show()
+        # plot_confusion_matrix(grid_search_cv, x_test, y_test)
+        # plt.title("Top DT Confusion Matrix")
+        # plt.savefig("Top-DTConfusionMatrix.png")
 
-    performance_results(y_test, predictions)
+        performance_results(y_test, predictions, x)
+
+calculate_and_write_averages(average_accuracy, average_maf1, average_waf1)
 
 '''PER'''
 
-clf = Perceptron()
-clf.fit(x_train, y_train)
-print(clf)
-predictions = clf.predict(x_test)
+for x in range(10):
+    clf = Perceptron()
+    clf.fit(x_train, y_train)
+    print(clf)
+    predictions = clf.predict(x_test)
 
-'''#7 Analysis in text file'''
+    '''#7 Analysis in text file'''
 
-with open("drugs-performance.txt", 'a') as f:
-    f.write("\n\n*******************************************************\n")
-    f.write("Description: Perceptron model with default parameters")
-    f.close()
+    with open("drugs-performance.txt", 'a') as f:
+        f.write("\n\n*******************************************************\n")
+        f.write("Description: Perceptron model with default parameters")
+        f.write("\nInstance #")
+        f.write(str(x))
+        f.write("\n\n Confusion Matrix \n")
+        np.savetxt(f, confusion_matrix(y_test, predictions))
+        f.close()
 
-    print(confusion_matrix(y_test, predictions))
-    '''Save in txt????'''
-    plot_confusion_matrix(clf, x_test, y_test)
-    plt.savefig("PERConfusionMatrix.png")
-    plt.show()
+        # plot_confusion_matrix(clf, x_test, y_test)
+        # plt.title("Perceptron Confusion Matrix")
+        # plt.savefig("PERConfusionMatrix.png")
 
-    performance_results(y_test, predictions)
+        performance_results(y_test, predictions, x)
+
+calculate_and_write_averages(average_accuracy, average_maf1, average_waf1)
 
 '''Base-MLP'''
-mlpcParams = {'hidden_layer_sizes': [1, 100], 'activation': ['sigmoid', 'logistic'], 'solver': 'sgd'}
-clf = MLPClassifier(hidden_layer_sizes=[1, 100], activation='logistic', solver='sgd')
-clf.fit(x_train, y_train)
-print(clf)
-predictions = clf.predict(x_test)
+for x in range(10):
+    mlpcParams = {'hidden_layer_sizes': [1, 100], 'activation': ['sigmoid', 'logistic'], 'solver': 'sgd'}
+    clf = MLPClassifier(hidden_layer_sizes=[1, 100], activation='logistic', solver='sgd')
+    clf.fit(x_train, y_train)
+    print(clf)
+    predictions = clf.predict(x_test)
 
+    '''#7 Analysis in text file'''
 
-'''#7 Analysis in text file'''
+    with open("drugs-performance.txt", 'a') as f:
+        f.write("\n\n*******************************************************\n")
+        f.write("Description: Base-MLP model with parameters\n")
+        f.write("hidden_layer_sizes = [1, 100]\n")
+        f.write("activation = [sigmoid, logistic]\n")
+        f.write("solver = sdg")
+        f.write("\nInstance #")
+        f.write(str(x))
+        f.write("\n\n Confusion Matrix \n")
+        np.savetxt(f, confusion_matrix(y_test, predictions))
+        f.close()
 
-with open("drugs-performance.txt", 'a') as f:
-    f.write("\n\n*******************************************************\n")
-    f.write("Description: Base-MLP model with parameters\n")
-    f.write("hidden_layer_sizes = [1, 100]\n")
-    f.write("activation = [sigmoid, logistic]\n")
-    f.write("solver = sdg")
-    f.close()
+        # plot_confusion_matrix(clf, x_test, y_test)
+        # plt.title("Base MLP Confusion Matrix")
+        # plt.savefig("BaseMLPConfusionMatrix.png")
 
-    print(confusion_matrix(y_test, predictions))
-    '''Save in txt????'''
-    plot_confusion_matrix(clf, x_test, y_test)
-    plt.savefig("BaseMLPConfusionMatrix.png")
-    plt.show()
+        performance_results(y_test, predictions, x)
 
-    performance_results(y_test, predictions)
-
-
+calculate_and_write_averages(average_accuracy, average_maf1, average_waf1)
 
 '''Top-MLP'''
 
+'''??Params??'''
+for x in range(10):
+    mlpParams = {'activation': ['tanh', 'relu', 'identity'], 'hidden_layers': [3, 10],
+                 'solver': ['adam', 'sgd']}
+    #print(estimator.get_params().keys())
+    #grid_search_cv = GridSearchCV(MLPClassifier(), mlpParams)
+    grid_search_cv.fit(x_train, y_train)
 
-'''??Params??
-mlpParams = {'activation': ['sigmoid', 'tanh', 'relu', 'identity'], 'hidden_layers': [3, 10], 'solver': ['adam', 'sgd']}
-grid_search_cv = GridSearchCV(MLPClassifier())
-grid_search_cv.fit(x_train, y_train)
+    print(grid_search_cv.get_params().keys())
+    print(grid_search_cv.best_estimator_)
 
-print(grid_search_cv.get_params().keys())'''
-'''print(grid_search_cv.best_estimator_)
+    eg(
+        grid_search_cv.best_estimator_,
+        out_file="drug_topMLP.dot",
+        feature_names=['Age', 'Sex', 'BP', 'Cholesterol', 'Na_to_K'],
+        class_names=['DrugA', 'DrugB', 'DrugC', 'DrugX', 'DrugY'],
+        filled=True,
+    )
 
-eg(
-    grid_search_cv.best_estimator_,
-    out_file="drug_topMLP.dot",
-    feature_names=['Age', 'Sex', 'BP', 'Cholesterol', 'Na_to_K'],
-    class_names=['DrugA', 'DrugB', 'DrugC', 'DrugX', 'DrugY'],
-    filled=True,
-)
+    (graph,) = pydot.graph_from_dot_file('drug_topMLP.dot')
+    graph.write_png('drug_topMLP.png')
 
-(graph,) = pydot.graph_from_dot_file('drug_topMLP.dot')
-graph.write_png('drug_topMLP.png')'''
+    predictions = grid_search_cv.predict(x_test)
 
+    with open("drugs-performance.txt", 'a') as f:
+        f.write("\n\n*******************************************************\n")
+        f.write("Description: Top-MLP model with parameters"
+                " \nactivation = [sigmoid, tanh, relu, identity]"
+                "\nhidden_layers = a range between 3 and 10"
+                "\nsolver = [adam, sgd]")
+        f.write("\nInstance #")
+        f.write(str(x))
+        f.write("\n\n Confusion Matrix \n")
+        np.savetxt(f, confusion_matrix(y_test, predictions))
+        f.close()
 
+        # plot_confusion_matrix(grid_search_cv, x_test, y_test)
+        # plt.title("Top MLP Confusion Matrix")
+        # plt.savefig("Top-MLPConfusionMatrix.png")
 
+        performance_results(y_test, predictions, x)
 
+calculate_and_write_averages(average_accuracy, average_maf1, average_waf1)
