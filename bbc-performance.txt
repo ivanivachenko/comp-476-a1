@@ -1,0 +1,109 @@
+******************************Multi-nomialNB default values, try 1*****************************************
+
+confusion matrix: 
+[[ 86   0   3   0   4]
+ [  0  57   1   0   3]
+ [  1   1  92   0   0]
+ [  0   0   0 106   0]
+ [  0   0   1   0  90]]
+
+classification report: 
+              precision    recall  f1-score   support
+
+           0       0.99      0.92      0.96        93
+           1       0.98      0.93      0.96        61
+           2       0.95      0.98      0.96        94
+           3       1.00      1.00      1.00       106
+           4       0.93      0.99      0.96        91
+
+    accuracy                           0.97       445
+   macro avg       0.97      0.97      0.97       445
+weighted avg       0.97      0.97      0.97       445
+accuracy score: 0.9685393258426966
+f1_score macro: 0.9668672685367637
+f1_score weighted: 0.9685084828158207
+the number of word-tokens in the entire corpus: 877745
+logprob of said {2.083270034524209}
+logprob of affecting: {4.943368364222727}
+the number of word-tokens in the entire corpus: 877745
+******************************Multi-nomialNB default values, try 2*****************************************
+
+confusion matrix: 
+[[ 86   0   3   0   4]
+ [  0  57   1   0   3]
+ [  1   1  92   0   0]
+ [  0   0   0 106   0]
+ [  0   0   1   0  90]]
+
+classification report: 
+              precision    recall  f1-score   support
+
+           0       0.99      0.92      0.96        93
+           1       0.98      0.93      0.96        61
+           2       0.95      0.98      0.96        94
+           3       1.00      1.00      1.00       106
+           4       0.93      0.99      0.96        91
+
+    accuracy                           0.97       445
+   macro avg       0.97      0.97      0.97       445
+weighted avg       0.97      0.97      0.97       445
+accuracy score: 0.9685393258426966
+f1_score macro: 0.9668672685367637
+f1_score weighted: 0.9685084828158207
+the number of word-tokens in the entire corpus: 877745
+logprob of said {2.083270034524209}
+logprob of affecting: {4.943368364222727}
+******************************Multi-nomialNB default values,  smoothing value=0.0001*****************************************
+
+confusion matrix: 
+[[ 84   0   3   0   6]
+ [  0  56   1   0   4]
+ [  0   0  93   0   1]
+ [  1   0   0 105   0]
+ [  0   0   0   0  91]]
+
+classification report: 
+              precision    recall  f1-score   support
+
+           0       0.99      0.90      0.94        93
+           1       1.00      0.92      0.96        61
+           2       0.96      0.99      0.97        94
+           3       1.00      0.99      1.00       106
+           4       0.89      1.00      0.94        91
+
+    accuracy                           0.96       445
+   macro avg       0.97      0.96      0.96       445
+weighted avg       0.97      0.96      0.96       445
+accuracy score: 0.9640449438202248
+f1_score macro: 0.9626346032734225
+f1_score weighted: 0.9640872182968311
+the number of word-tokens in the entire corpus: 877745
+logprob of said {4.943368364222727}
+logprob of affecting: {4.943368364222727}
+******************************Multi-nomialNB default values,  smoothing value=0.9*****************************************
+
+confusion matrix: 
+[[ 86   0   3   0   4]
+ [  0  57   1   0   3]
+ [  1   1  92   0   0]
+ [  0   0   0 106   0]
+ [  0   0   1   0  90]]
+
+classification report: 
+              precision    recall  f1-score   support
+
+           0       0.99      0.92      0.96        93
+           1       0.98      0.93      0.96        61
+           2       0.95      0.98      0.96        94
+           3       1.00      1.00      1.00       106
+           4       0.93      0.99      0.96        91
+
+    accuracy                           0.97       445
+   macro avg       0.97      0.97      0.97       445
+weighted avg       0.97      0.97      0.97       445
+accuracy score: 0.9685393258426966
+f1_score macro: 0.9668672685367637
+f1_score weighted: 0.9685084828158207
+the number of word-tokens in the entire corpus: 877745
+logprob of said {2.083270034524209}
+logprob of affecting: {4.943368364222727}
