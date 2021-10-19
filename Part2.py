@@ -161,7 +161,7 @@ for x in range(10):
         f.write("\nInstance #")
         f.write(str(x))
         f.write("\n\n Confusion Matrix \n")
-        np.savetxt(f, confusion_matrix(y_test, predictions))
+        f.write(str(confusion_matrix(y_test, predictions)))
         f.close()
 
     performance_results(y_test, predictions, x)
@@ -225,7 +225,7 @@ for x in range(10):
         f.write("\nInstance #")
         f.write(str(x))
         f.write("\n\n Confusion Matrix \n")
-        np.savetxt(f, confusion_matrix(y_test, predictions))
+        f.write(str(confusion_matrix(y_test, predictions)))
         f.close()
 
         performance_results(y_test, predictions, x)
@@ -248,7 +248,7 @@ for x in range(10):
         f.write("\nInstance #")
         f.write(str(x))
         f.write("\n\n Confusion Matrix \n")
-        np.savetxt(f, confusion_matrix(y_test, predictions))
+        f.write(str(confusion_matrix(y_test, predictions)))
         f.close()
 
         performance_results(y_test, predictions, x)
@@ -274,7 +274,7 @@ for x in range(10):
         f.write("\nInstance #")
         f.write(str(x))
         f.write("\n\n Confusion Matrix \n")
-        np.savetxt(f, confusion_matrix(y_test, predictions))
+        f.write(str(confusion_matrix(y_test, predictions)))
         f.close()
 
         performance_results(y_test, predictions, x)
