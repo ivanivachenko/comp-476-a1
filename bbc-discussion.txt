@@ -1,0 +1,8 @@
+a) Precision would be the metric to focus on since finding relevant articles would be most important in this case while missing 
+   would not be very detrimental, which is why the recall should be weighted less.
+
+b) The performance differs between the steps for several reasons.
+   Due to the change of smoothing values, which serves to elimanate zero probablility, lead to a change in the results.
+   Aswell as the fact the the multinomial classifier had its random state set to null which made the train_test_split function
+   return diffrent results every execution.
+
